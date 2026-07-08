@@ -1,0 +1,101 @@
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom"; // ➡️ สลับหน้าใน 0.1 วินาทีแบบเว็บ SPA สากล
+import { base44 } from "@/api/base44Client";
+import { Button } from "@/components/ui/button";
+import { LogIn, Loader2, ArrowRight } from "lucide-react"; // 🎬 ดึงไอคอนความเร้าใจระดับโปร
+import AuthLayout from "@/components/AuthLayout";
+import GoogleIcon from "@/components/GoogleIcon";
+
+export default function Login() {
+  const navigate = useNavigate();
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  // 🚀 1. ปุ่มสูตรลับทางลัด: จิ้มปั๊บเข้าหน้ากรอกข้อมูล CHIRASIN MARKET ทันที ไม่ต้องมีล็อกอิน
+  const handleQuickEnter = () => {
+    setError("");
+    setLoading(true);
+    try {
+      // สามารถผูกระบบล็อกอินอัตโนมัติเบื้องหลัง หรือกดข้ามไปหน้าฟอร์มหลักได้โดยตรงตามสั่งครับพี่
+      navigate("/"); 
+    } catch (err) {
+      setError("เกิดข้อผิดพลาดในการเชื่อมต่อท่อส่งสัญญาณ");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 🌐 2. ปุ่มทางเลือก: เข้าใช้งานด่วนด้วยบัญชี Google (กดทีเดียวจบ)
+  const handleGoogle = async () => {
+    setError("");
+    setLoading(true);
+    try {
+      await base44.auth.loginWithProvider("google", "/");
+    } catch (err) {
+      setError(err.message || "Google login failed");
+      setLoading(false);
+    }
+  };
+
+  return (
+    <AuthLayout
+      icon={LogIn}
+      title="CHIRASIN MARKET"
+      subtitle="ยินดีต้อนรับสู่ระบบตลาดประกาศพรีเมียม"
+      footer={
+        <p class="text-muted-foreground text-sm">
+          ✨ เว็บประกาศขายงาน กดปั๊บ ขึ้นปุ๊บ แบบเร้าใจ!
+        </p>
+      }
+    >
+      <div className="space-y-4 mt-2">
+        {error && (
+          <div className="p-3 rounded-lg bg-destructive/10 text-destructive text-sm border border-destructive/20 animate-pulse text-center">
+            {error}
+          </div>
+        )}
+
+        {/* 🔥 ปุ่มที่ 1: ปุ่มทางลัดตัวจริงตัวใหญ่หนาสะใจ จิ้มปั๊บทะลุมิติเข้าหน้าเว็บทันที! */}
+        <Button 
+          type="button" 
+          className="w-full h-14 font-bold text-lg bg-gradient-to-r from-[#002d62] to-[#ff6600] hover:opacity-90 text-white shadow-lg transition-all"
+          style={{ borderRadius: "12px" }}
+          disabled={loading}
+          onClick={handleQuickEnter}
+        >
+          {loading ? (
+            <>
+              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+              กำลังเปิดประตูระบบ...
+            </>
+          ) : (
+            <>
+              เข้าสู่หน้าลงประกาศโฆษณาฟรีเจ็ดวัน <ArrowRight className="w-5 h-5 ml-2" />
+            </>
+          )}
+        </Button>
+
+        <div className="relative my-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-border" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-card px-3 text-muted-foreground">หรือเข้าใช้งานผ่าน</span>
+          </div>
+        </div>
+
+        {/* 🌐 ปุ่มที่ 2: ปุ่ม Continue with Google ตัวหนาบิ๊กไซส์ ล็อกสิทธิ์อัตโนมัติ */}
+        <Button
+          variant="outline"
+          className="w-full h-14 text-base font-bold border-2 hover:bg-secondary/50 transition-all"
+          style={{ borderRadius: "12px" }}
+          onClick={handleGoogle}
+          disabled={loading}
+        >
+          <GoogleIcon className="w-6 h-6 mr-2" />
+          Continue with Google
+        </Button>
+      </div>
+    </AuthLayout>
+  );
+}

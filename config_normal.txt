@@ -1,0 +1,208 @@
+import time
+import sys
+import os  
+import threading
+import datetime  
+import pandas as pd
+import numpy as np  
+from iqoptionapi.stable_api import IQ_Option
+from colorama import init, Fore, Back, Style
+
+try:
+    import config
+except ImportError:
+    print(f"\033[91m❌ Error: 'config.py' file not found in the same folder!\033[0m")
+    sys.exit()
+
+init(autoreset=True)
+
+GREEN_BG = "\033[42m\033[30m\033[1m"   
+RED_BG = "\033[41m\033[37m"         
+CYAN_BG = "\033[46m\033[30m"        
+GREEN_TXT = "\033[92m\033[1m"       
+RED_TXT = "\033[91m\033[1m"         
+YELLOW_TXT = "\033[93m\033[1m"      
+CYAN_TXT = "\033[96m"               
+RESET = "\033[0m"
+
+if config.EXPIRY_MODE == "DYNAMIC":
+    working_timeframe = 300  
+    trade_expiry = 1        
+else:
+    working_timeframe = config.TIMEFRAME
+    trade_expiry = config.TIMEFRAME // 60
+
+print(f"{Fore.CYAN}Connecting to IQ Option...{Style.RESET_ALL}")
+API = IQ_Option(config.EMAIL, config.PASSWORD)
+check_connect, reason = API.connect()
+
+if not check_connect:
+    print(f"{Fore.RED}❌ Connection Failed: {reason}{Style.RESET_ALL}")
+    sys.exit()
+
+print(f"{Fore.GREEN}✅ Connection Successful! Account Type: {config.MODE}{Style.RESET_ALL}")
+API.change_balance(config.MODE)
+
+TARGET_ASSETS = []
+current_day = datetime.datetime.now().weekday()  
+is_weekend = current_day == 5 or current_day == 6
+
+for asset in config.BASE_ASSETS:
+    final_name = f"{asset}-OTC" if is_weekend else asset
+    TARGET_ASSETS.append(final_name)
+    print(f"{Fore.CYAN}📊 Initializing Isolated Demo Signal Feed -> {final_name}{Style.RESET_ALL}")
+
+asset_states = {}
+for asset in TARGET_ASSETS:
+    asset_states[asset] = {
+        "current_amount": config.BASE_AMOUNT, 
+        "current_step": 0,
+        "last_trigger_bar_time": 0,
+        "trend_order_counter": 0,     
+        "trend_locked": False          
+    }
+
+net_profit_loss = 0.0  
+win_counter = 0     
+loss_counter = 0    
+lock = threading.Lock() 
+
+print(f"\n{Fore.CYAN}Starting Monolithic Dynamic-Scanning Engine...{Style.RESET_ALL}")
+print(f"\n{Fore.MAGENTA}=================================================={Style.RESET_ALL}")
+print(f"{Fore.GREEN}🚀 ENGINE STATUS: OPERATING IN [{config.EXPIRY_MODE}] UNLOCKED MODE{Style.RESET_ALL}")
+print(f"{Fore.GREEN}📊 UNLOCKED MARTINGALE STEPS: {config.MAX_STEPS} | UNLOCKED TREND LIMIT: {config.MAX_ORDERS_PER_TREND}{Style.RESET_ALL}")
+if config.BOT_SWITCH != "ON":
+    print(f"{Fore.YELLOW}⚠️ BOT IS IN SIMULATION MODE ('OFF'). NO REAL ORDERS WILL BE PLACED.{Style.RESET_ALL}")
+print(f"{Fore.MAGENTA}==================================================\n{Style.RESET_ALL}")
+
+def execute_order_tracking_safely(asset, order_id, trade_amount, current_step_at_trade, expiry_min):
+    global net_profit_loss, win_counter, loss_counter
+    time.sleep((expiry_min * 60) + 1)
+    try:
+        win_status = "loose"
+        amount_returned = 0.0
+        for _ in range(5):
+            status, check_amount = API.check_win_v4(order_id)
+            if status:
+                amount_returned = float(check_amount)
+                win_status = "win" if amount_returned > 0 else "loose"
+                break
+            time.sleep(1)
+            
+        with lock:
+            now_str = datetime.datetime.now().strftime("%H:%M:%S")
+
+            if win_status == "win":
+                round_net = round(amount_returned - trade_amount, 2) if amount_returned > trade_amount else round(amount_returned, 2)
+                if round_net <= 0:  
+                    round_net = round(trade_amount * 0.82, 2) 
+                
+                net_profit_loss += round_net
+                win_counter += 1
+                
+                ledger_status = f"{GREEN_TXT}Total Profit: +${net_profit_loss:.2f}{RESET}" if net_profit_loss >= 0 else f"{RED_TXT}Total Loss: -${abs(net_profit_loss):.2f}{RESET}"
+                print(f"\n[{now_str}] {GREEN_BG} 🟢 WIN! {RESET} Pair: {Fore.YELLOW}{asset}{RESET} | PnL: {GREEN_TXT}+${round_net:.2f}{RESET} | {CYAN_TXT}WIN: {win_counter} / LOSS: {loss_counter}{RESET} | 💵 {ledger_status}\n")
+                
+                asset_states[asset]["current_amount"] = config.BASE_AMOUNT
+                asset_states[asset]["current_step"] = 0
+            else:
+                round_net = round(-trade_amount, 2)
+                net_profit_loss += round_net
+                loss_counter += 1
+                
+                # ทำงานตามตัวเลขใน Notepad ตรงๆ แบบไม่มีระบบล็อกภายในโค้ดมาขัดขวาง
+                asset_states[asset]["current_step"] = current_step_at_trade + 1
+                if asset_states[asset]["current_step"] < config.MAX_STEPS:
+                    asset_states[asset]["current_amount"] = config.BASE_AMOUNT * (config.MULTIPLIER ** asset_states[asset]["current_step"])
+                else:
+                    asset_states[asset]["current_amount"] = config.BASE_AMOUNT
+                    asset_states[asset]["current_step"] = 0
+                    
+                ledger_status = f"{GREEN_TXT}Total Profit: +${net_profit_loss:.2f}{RESET}" if net_profit_loss >= 0 else f"{RED_TXT}Total Loss: -${abs(net_profit_loss):.2f}{RESET}"
+                print(f"\n[{now_str}] {RED_BG} 🔴 LOSS! {RESET} Pair: {Fore.YELLOW}{asset}{RESET} | PnL: {RED_TXT}-${trade_amount:.2f}{RESET} | {CYAN_TXT}WIN: {win_counter} / LOSS: {loss_counter}{RESET} | 💵 {ledger_status}\n")
+    except Exception:
+        pass
+
+while True:
+    now_sec = datetime.datetime.now().second
+    now_time = datetime.datetime.now().strftime("%H:%M:%S")
+    
+    execution_delay = 0.5 if now_sec <= 3 else 1.0
+    
+    for asset in TARGET_ASSETS:
+        print(f"{Fore.YELLOW}[{now_time}] 📡 Scanning live {working_timeframe//60}M signals for [{asset}] (Trend Limit: {asset_states[asset]['trend_order_counter']}/{config.MAX_ORDERS_PER_TREND})...", end="\r")
+        
+        target_timestamp = int(time.time())
+        candles = None
+        
+        try:
+            candles = API.get_candles(asset, working_timeframe, 50, target_timestamp)
+        except Exception:
+            candles = None
+            
+        if candles is None or not isinstance(candles, list) or len(candles) < 30:
+            continue
+            
+        df = pd.DataFrame(candles)
+        if 'max' in df.columns:
+            df.rename(columns={'max': 'high'}, inplace=True)
+        if 'min' in df.columns:
+            df.rename(columns={'min': 'low'}, inplace=True)
+        
+        df['basis'] = df['close'].rolling(window=config.BB_PERIOD).mean()
+        df['std'] = df['close'].rolling(window=config.BB_PERIOD).std(ddof=0) 
+        df['upper_band'] = df['basis'] + (config.BB_STD * df['std'])
+        df['lower_band'] = df['basis'] - (config.BB_STD * dev)
+        
+        prev_bar = df.iloc[-2]  
+        prev_bar_time = prev_bar['from']
+        
+        if asset_states[asset]["last_trigger_bar_time"] == 0:
+            asset_states[asset]["last_trigger_bar_time"] = prev_bar_time
+            continue
+        
+        prev_open = prev_bar['open']
+        prev_close = prev_bar['close']
+        prev_high = prev_bar['high']
+        prev_low = prev_bar['low']
+        prev_upper = prev_bar['upper_band']
+        prev_lower = prev_bar['lower_band']
+        
+        # คืนค่าสิทธิ์เมื่อหลุดเทรนเดิมกลับเข้ากรอบ
+        if prev_low > prev_lower and prev_high < prev_upper:
+            asset_states[asset]["trend_order_counter"] = 0
+            asset_states[asset]["trend_locked"] = False
+        
+        is_prev_green = prev_close > prev_open
+        is_prev_red = prev_close < prev_open
+        
+        buy_signal = is_prev_green and (prev_high >= (prev_upper - config.BUFFER_PIPS))   
+        sell_signal = is_prev_red and (prev_low <= (prev_lower + config.BUFFER_PIPS))     
+        
+        action = "call" if buy_signal else ("put" if sell_signal else None)
+        
+        if action is not None and prev_bar_time != asset_states[asset]["last_trigger_bar_time"]:
+            asset_states[asset]["last_trigger_bar_time"] = prev_bar_time
+            
+            with lock:
+                # ทำงานตามโควตาจำนวนครั้งออเดอร์ในเทรนรอบนี้ตามตัวเลข Notepad เป๊ะๆ
+                if asset_states[asset]["trend_order_counter"] >= config.MAX_ORDERS_PER_TREND:
+                    if not asset_states[asset]["trend_locked"]:
+                        print(f"\n⚠️ [{asset}] สัญญาณข้ามเส้นหยุดชั่วคราว! เนื่องจากออกครบ {config.MAX_ORDERS_PER_TREND} ออเดอร์ตามที่ระบุในคอนฟิกแล้ว")
+                        asset_states[asset]["trend_locked"] = True
+                    continue
+                
+                asset_states[asset]["trend_order_counter"] += 1
+                trade_amount = asset_states[asset]["current_amount"]
+                current_step_at_trade = asset_states[asset]["current_step"]
+                
+                print(f"\n🎯 [{asset}] BB 2.0 Signal Detected! -> [{action.upper()}] Trend Order #{asset_states[asset]['trend_order_counter']} Amount ${trade_amount:.2f}")
+                
+                if config.BOT_SWITCH == "ON":
+                    status, order_id = API.buy(trade_amount, asset, action, trade_expiry)
+                    print(f"{Fore.GREEN}👍 [{asset}] Order Placed Successfully ID: {order_id}{Style.RESET_ALL}")
+                    threading.Thread(target=execute_order_tracking_safely, args=(asset, order_id, trade_amount, current_step_at_trade, trade_expiry), daemon=True).start()
+                else:
+                    print(f"{Fore.YELLOW}🔍 [SIMULATION] Order suppressed because BOT_SWITCH is 'OFF'{Style.RESET_ALL}")
+
+    time.sleep(execution_delay)

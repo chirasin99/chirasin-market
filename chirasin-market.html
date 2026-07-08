@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google-site-verification" content="t57P8Y0t9bfU2rbLzCsBSH9joZ1OnlHda0jp7vnaXbc" />
+    <title>CHIRASIN MARKET - แพลตฟอร์มลงประกาศเช่าพื้นที่โฆษณา</title>
+    <style>
+        /* 📍 ระบบดีไซน์และตัวแปรสีสไตล์ v0 Premium ธีมส้ม-ดำคงที่ ป้องกันหน้าเว็บพัง */
+        :root {
+            --bg: #0f172a;
+            --bg-2: #1e293b;
+            --card-dark: #1e293b;
+            --card-light: #ffffff;
+            --card-2: #f1f5f9;
+            --line: #cbd5e1;
+            --muted: #64748b;
+            --orange: #FF6B35;
+            --dark: #0f172a;
+            --white: #ffffff;
+        }
+        * { box-sizing: border-box; font-family: 'Tahoma', 'Sarabun', sans-serif; }
+        body { background-color: var(--bg); margin: 0; padding: 0; color: #f8fafc; min-height: 100vh; }
+        .hidden { display: none !important; }
+        
+        /* สไตล์แถบเมนูด้านบน */
+        nav { background-color: #1e293b; padding: 0 24px; height: 64px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #334155; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); position: sticky; top: 0; z-index: 100; }
+        .nav-logo { display: flex; align-items: center; gap: 12px; }
+        .badge-pro { background-color: #0f172a; color: var(--orange); font-weight: 900; font-size: 12px; padding: 4px 10px; border-radius: 6px; }
+        .logo-text { font-size: 20px; font-weight: 900; color: white; }
+        .logo-orange { color: var(--orange); }
+        .nav-links { display: flex; align-items: center; gap: 24px; }
+        .nav-btn { color: #cbd5e1; background: none; border: none; font-size: 14px; font-weight: 700; cursor: pointer; }
+        .nav-btn:hover { color: white; }
+        .btn-orange-nav { background-color: #0f172a; color: white; font-weight: 800; padding: 8px 20px; border: 1px solid #334155; border-radius: 12px; font-size: 12px; cursor: pointer; }
+        .btn-orange-nav:hover { background-color: var(--orange); border-color: var(--orange); }
+
+        main { max-width: 1200px; margin: 0 auto; padding: 40px 16px 100px; }
+
+        /* สไตล์หน้าแรกหลัก Hero */
+        .home-container { display: grid; grid-template-columns: 1fr 1fr; gap: 32px; align-items: center; margin-top: 20px; }
+        .home-left { background-color: #1e293b; padding: 48px; border-radius: 24px; border: 1px solid #334155; display: flex; flex-direction: column; gap: 16px; }
+        .badge-free { background-color: #0f172a; color: var(--orange); font-size: 12px; font-weight: 800; padding: 4px 12px; border-radius: 9999px; width: fit-content; border: 1px solid #334155; }
+        .home-left h1 { font-size: 48px; font-weight: 900; margin: 0; color: white; line-height: 1.1; }
+        .home-left h1 span { color: var(--orange); }
+        .home-left p { color: #94a3b8; font-size: 14px; margin: 0; line-height: 1.6; }
+        .home-right { display: flex; flex-direction: column; gap: 16px; }
+        
+        .my-clickable-card { width: 100%; text-align: left; background-color: #ffffff; border: 2px solid var(--line); padding: 24px; border-radius: 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; transition: all 0.2s; outline: none; }
+        .my-clickable-card:hover { border-color: var(--orange); transform: scale(1.02); }
+        .card-info h3 { font-size: 20px; font-weight: 900; color: var(--dark); margin: 0 0 4px 0; }
+        .card-info p { font-size: 12px; color: var(--muted); margin: 0; font-weight: normal; }
+
+        /* 👑 โครงสร้างแผงแบ่งครึ่งอัจฉริยะ (Form Left + Live Preview Right) */
+        .wizard-container { display: grid; grid-template-columns: 1.2fr 1fr; gap: 32px; align-items: start; }
+        
+        /* สไตล์ฝั่งฟอร์ม (ขาวสะอาดตาตามคำขอ) */
+        .form-box { background-color: white; border: 1px solid #e2e8f0; border-radius: 24px; padding: 32px; color: var(--dark); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        .form-title { font-size: 20px; font-weight: 900; color: var(--dark); border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin: 0 0 20px 0; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+        .form-group label, .field-label { font-size: 13px; font-weight: 700; color: #475569; }
+        .field-hint { font-size: 11px; color: var(--muted); margin-top: -2px; margin-bottom: 4px; }
+        .form-control { width: 100%; height: 44px; padding: 0 16px; border: 1px solid var(--line); border-radius: 12px; font-size: 14px; color: var(--dark); outline: none; }
+        .form-control:focus { border-color: var(--orange); }
+        textarea.form-control { height: 100px; padding: 12px 16px; resize: none; }
+        
+        /* สไตล์กล่องใส่ป้ายคำค้นหาคีย์เวิร์ด (Tag Input) */
+        .tag-input-wrap { width: 100%; min-height: 44px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 12px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; background-color: white; cursor: text; }
+        .tag-input-wrap input { border: none; outline: none; font-size: 14px; color: var(--dark); flex: 1; min-width: 100px; height: 30px; background: transparent; }
+        .my-custom-tag { background-color: var(--orange); color: white; font-size: 12px; font-weight: bold; padding: 4px 10px; border-radius: 6px; display: flex; align-items: center; gap: 6px; }
+        .tag-close-btn { cursor: pointer; font-weight: bold; font-size: 10px; opacity: 0.8; }
+
+        .btn-submit { width: 100%; height: 48px; background-color: var(--dark); color: white; font-weight: 700; border: none; border-radius: 12px; font-size: 14px; cursor: pointer; margin-top: 16px; transition: background-color 0.2s; display: block; text-align: center; }
+        .btn-submit:hover { background-color: var(--orange); }
+        .btn-green { background-color: #059669; }
+        .btn-green:hover { background-color: #047857; }
+
+        /* ✨ 🎨 สไตล์แผงกระจกเงาจำลองโฆษณาสด (Live Preview Panel) สไตล์ High-End */
+        .preview-box { background: linear-gradient(135deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%); border: 1px solid #334155; border-radius: 24px; padding: 24px; position: sticky; top: 88px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3); }
+        .preview-badge { background-color: var(--orange); color: white; font-size: 11px; font-weight: 800; padding: 4px 10px; border-radius: 6px; width: fit-content; margin-bottom: 16px; letter-spacing: 0.5px; }
+        .preview-card { background-color: #0f172a; border: 1px solid #1e293b; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; }
+        .preview-img-container { width: 100%; aspect-ratio: 16/9; background-color: #1e293b; display: flex; align-items: center; justify-content: center; color: #475569; font-size: 14px; position: relative; }
+        .preview-img-container img { width: 100%; height: 100%; object-fit: cover; }
+        .preview-body { padding: 20px; display: flex; flex-direction: column; gap: 12px; }
+        .preview-title { font-size: 20px; font-weight: 800; color: white; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .preview-desc { font-size: 13px; color: #94a3b8; margin: 0; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; min-height: 58px; }
+        .preview-price { font-size: 22px; font-weight: 900; color: var(--orange); }
+        .preview-meta { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #64748b; border-top: 1px solid #1e293b; padding-top: 12px; margin-top: 4px; }
+        .preview-tags-container { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+        .preview-tag-badge { background-color: #1e293b; color: #cbd5e1; font-size: 11px; padding: 2px 8px; border-radius: 4px; border: 1px solid #334155; }
+
+        /* สไตล์ป๊อปอัปแจ้งเตือน */
+        .modal-overlay { display: none; position: fixed; inset: 0; background-color: rgba(15, 23, 42, 0.8); align-items: center; justify-content: center; padding: 16px; z-index: 100; }
+        .modal-box { background-color: #1e293b; border: 1px solid #334155; width: 100%; max-width: 384px; border-radius: 24px; padding: 24px; text-align: center; display: flex; flex-direction: column; gap: 16px; color: white; }
+        .modal-icon { width: 48px; height: 48px; border-radius: 9999px; background-color: #064e3b; color: #34d399; border: 1px solid #065f46; display: flex; align-items: center; justify-content: center; margin: 0 auto; font-weight: 700; font-size: 18px; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="nav-logo">
+            <span class="badge-pro">PRO</span>
+            <span class="logo-text">CHIRASIN <span class="logo-orange">MARKET</span></span>
+        </div>
+        <div class="nav-links">
+            <button onclick="handleStepSwitch('home')" class="nav-btn">หน้าแรก</button>
+            <button onclick="handleStepSwitch('ads-board')" class="nav-btn">ประกาศทั้งหมด</button>
+            <button onclick="handleStepSwitch('one')" class="btn-orange-nav">ลงประกาศฟรี</button>
+        </div>
+    </nav>
+
+    <main>
+        <!-- 🏠 [หน้าแรกหลักตัวจริง] -->
+        <div id="pageHome" style="display: block;">
+            <div class="home-container">
+                <div class="home-left">
+                    <span class="badge-free">เว็บโฆษณาฟรี</span>
+                    <h1>CHIRASIN<br><span>MARKET</span></h1>
+                    <p>ลงประกาศขายสินค้าและบริการฟรี ไม่ต้องสมัครสมาชิก ค้นหาสินค้าที่คุณต้องการได้ที่นี่</p>
+                </div>
+                <div class="home-right">
+                    <button type="button" onclick="handleStepSwitch('one')" class="my-clickable-card">
+                        <div class="card-info">

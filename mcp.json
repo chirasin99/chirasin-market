@@ -1,0 +1,28 @@
+{
+  "mcpServers": {
+    "digital-options": {
+      "url": "https://digital-options.mcp.iqoption.com",
+      "headers": {
+        "Authorization": "Bearer YuAOoqm0dtUvmiin_cYU_mONvf9UJIwIrzosIx-j"
+      }
+    },
+    "marginal-cfd": {
+      "url": "https://marginal-cfd.mcp.iqoption.com",
+      "headers": {
+        "Authorization": "Bearer YuAOoqm0dtUvmiin_cYU_mONvf9UJIwIrzosIx-j"
+      }
+    },
+    "marginal-crypto": {
+      "url": "https://marginal-crypto.mcp.iqoption.com",
+      "headers": {
+        "Authorization": "Bearer YuAOoqm0dtUvmiin_cYU_mONvf9UJIwIrzosIx-j"
+      }
+    },
+    "marginal-forex": {
+      "url": "https://marginal-forex.mcp.iqoption.com",
+      "headers": {
+        "Authorization": "Bearer YuAOoqm0dtUvmiin_cYU_mONvf9UJIwIrzosIx-j"
+      }
+    }
+  }
+}
